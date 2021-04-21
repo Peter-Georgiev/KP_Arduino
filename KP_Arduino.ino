@@ -308,9 +308,9 @@ void loop(){
 	if (distanceHc2 >= maxDistance || distanceHc2 <= minDistance){
 		isOut = 1;
 		lcd.setCursor(0, 0);
-		lcd.print(" OUT  OF");
+		lcd.print("OUT  OF ");
 		lcd.setCursor(0, 1);
-		lcd.print("  RANGE ");
+		lcd.print(" RANGE  ");
 	} else {		
 		lcd.setCursor(0, 1);		
 		lcd.print(distanceHc2);
