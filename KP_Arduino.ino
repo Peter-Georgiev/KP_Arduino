@@ -108,12 +108,12 @@ int sizeMelody4 = sizeof(melody4)/sizeof(int);
 
 //Add sizes here, and at the end of the "sizes" array.
 int sizes[] = {
-  sizeMelody0, 
-  sizeMelody1, 
-  sizeMelody2, 
-  sizeMelody3, 
-  sizeMelody4
-};
+	  sizeMelody0, 
+	  sizeMelody1, 
+	  sizeMelody2, 
+	  sizeMelody3, 
+	  sizeMelody4
+	};
 
 //////////////SETUP/////////////////
 void setup(){
