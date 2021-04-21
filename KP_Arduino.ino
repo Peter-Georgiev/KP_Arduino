@@ -1,4 +1,4 @@
-/* Created by Peter Georgiev ~ 19.052021
+/* Created by Peter Georgiev ~ 20.05.2021
 #########Breadboard circuit mounting:########
  * LCD VSS pin to ground
  * LCD VDD pin to +5V
@@ -12,19 +12,21 @@
  * LCD D7 pin to digital pin 7
  * LCD A pin to +5V
  * LCD K pin to ground
- * Buzzer + to 220Ohm Resistor leg and - to ground. The other resistor leg goes to pin 13.
+ * Buzzer + to 220Ohm
  * HC-SCR GND to ground
  * HC-SCR Echo to pin 11
  * HC-SCR Trig to pin 12
  * HC-SCR Vcc to +5V
  * A button for a metric system pin 10
+ * Temperature sensor analog pin A1
+ * A button for a temperature sensor analog pin A0
 ##############################################
 */
 //Including the LCD and sound library:
 #include <LiquidCrystal.h>
 
 // Define to which pin of the Arduino the output of the LM35 is connected:
-#define sensorTempPin A1
+#define sensorTemperaturePin A1
 #define sensorBtnPin A0
 
 //Defining pins
@@ -51,17 +53,21 @@
 // Initialize the LCD library
 LiquidCrystal lcd(RS, Enable, D4, D5, D6, D7);
 
-/////Definition of the LCD special characters///
-uint8_t cc0[8] = {0x00,0x00,0x00,0x00,0x00,0x01,0x03,0x07};
-uint8_t cc1[8] = {0x00,0x00,0x00,0x00,0x00,0x10,0x18,0x1C};
-uint8_t cc2[8] = {0x07,0x03,0x01,0x00,0x00,0x00,0x00,0x00};
-uint8_t cc3[8] = {0x1C,0x18,0x10,0x00,0x00,0x00,0x00,0x00};
-uint8_t cc4[8] = {0x00,0x00,0x00,0x10,0x18,0x0C,0x04,0x06};
-uint8_t cc5[8] = {0x06,0x04,0x0C,0x18,0x10,0x00,0x00,0x00};
-uint8_t cc6[8] = {0x10,0x08,0x0C,0x06,0x02,0x03,0x03,0x03};
-uint8_t cc7[8] = {0x03,0x03,0x03,0x02,0x06,0x0C,0x08,0x10};
+//Declaring a variable that will count the millis so the blinking is independent of "delays"
+unsigned long millisCounterHc1 = 0;
+unsigned long millisCounterHc2 = 0;
+int displayingHc1 = 0;
+int displayingHc2 = 0;
+char *ch[]={"(", ")", " cm. ", " in. ",};
+int levelInchDistance[9] = {0, 5, 10, 25, 50, 70, 90, 110, 131};
+int levelCmDistance[9] = {0, 10, 25, 50, 100, 150, 200, 250, 335};
+int levelDistance[9];
+int minDistance = 0;
+int maxDistance = 0;
+int metricBtn = 0;
+int sensorBtn = 0;
 
-////Sound notes setup
+//Sound notes setup
 int melody0[] = {NOTE_B3, NOTE_B3, NOTE_B3, NOTE_G3, NOTE_B3, 0, NOTE_D4, NOTE_D3};
 int melody1[] = {NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6};
 int melody2[] = {NOTE_C6, NOTE_C6, NOTE_C6};
@@ -69,12 +75,12 @@ int melody3[] = {NOTE_C6, NOTE_C6};
 int melody4[] = {NOTE_C6};
 
 //Add melodies here, and at the end of the "music" array.
-int* music[6/*number of melodies + 1*/] = {
+int* music[6] = {
 	melody0,
 	melody1, 
 	melody2,
 	melody3, 
-	melody4 /*,add here*/
+	melody4
 	};
 
 //Sound notes durations
@@ -85,7 +91,7 @@ int notesMelody3[] = {8,8};
 int notesMelody4[] = {4};
 
 //Add durations of the melodies here, and at the end of the "noteDurations" array.
-int* noteDurations[6/*number of melodies + 1*/] = {
+int* noteDurations[6] = {
 	notesMelody0, 
 	notesMelody1,
 	notesMelody2,
@@ -93,7 +99,7 @@ int* noteDurations[6/*number of melodies + 1*/] = {
 	notesMelody4
 	};
 
-//Sound sizes
+//Sound sizes array
 int sizeMelody0 = sizeof(melody0)/sizeof(int);
 int sizeMelody1 = sizeof(melody1)/sizeof(int);
 int sizeMelody2 = sizeof(melody2)/sizeof(int);
@@ -109,44 +115,10 @@ int sizes[] = {
   sizeMelody4
 };
 
-//Tone Function - Plays the tone
-int playSong(int track, float durConst){
-    for (int thisNote = 0; thisNote < sizes[track]; thisNote++) {
-    int noteDuration = 1000/noteDurations[track][thisNote];
-    tone(buzPin, music[track][thisNote],noteDuration);
-    int pauseBetweenNotes = noteDuration * durConst;
-    delay(pauseBetweenNotes);
-    noTone(buzPin);
-  }
-}
-
-//Declaring a variable that will count the millis so the blinking is independent of "delays"
-unsigned long millisCounterHc1 = 0;
-unsigned long millisCounterHc2 = 0;
-int levelInchDistance[9] = {0, 5, 10, 25, 50, 70, 90, 110, 131};
-int levelCmDistance[9] = {0, 10, 25, 50, 100, 150, 200, 250, 335};
-int displayingHc1 = 0;
-int displayingHc2 = 0;
-int levelDistance[9];
-int minDistance = 0;
-int maxDistance;
-char *ch[]={"(", ")", " cm. ", " in. ",};
-int metricBtn;
-int sensorBtn;
-
 //////////////SETUP/////////////////
 void setup(){
   // Set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
-  // Set up the LCD custom chars (8 maximum)
-  lcd.createChar(0, cc0);
-  lcd.createChar(1, cc1);
-  lcd.createChar(2, cc2);
-  lcd.createChar(3, cc3);
-  lcd.createChar(4, cc4);
-  lcd.createChar(5, cc5);
-  lcd.createChar(6, cc6);
-  lcd.createChar(7, cc7);
   
   //Initializes HC1 HC-SCR04 pins
   pinMode(trigHc1Pin, OUTPUT);
@@ -170,9 +142,15 @@ void loop(){
 	// Get a reading from the button sensor:
   	sensorBtn = analogRead(sensorBtnPin);
 	
+	bool isOnBtnMetric = false;
+	
+	if(metricBtn == HIGH){
+		isOnBtnMetric = true;
+	}
+	
 	// Print temperature
 	if(sensorBtn != LOW) {
-		temperatureSensor(metricBtn);
+		temperatureSensor(isOnBtnMetric);
 		delay(1000); // wait a second between readings
         return; 
 	}
@@ -190,33 +168,33 @@ void loop(){
 	//Serial.print(digitalRead(metricBtnPin));
 	//Serial.println(" metr");
   
-  // HC1 HC-SCR04 pins
-  unsigned long millisNowHc1 = millis();
-  long durationHc1;
-  int distanceHc1;
-  digitalWrite(trigHc1Pin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigHc1Pin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigHc1Pin, LOW);
-  //Measures the distanceHc1
-  durationHc1 = pulseIn(echoHc1Pin, HIGH);
-  distanceHc1 = (durationHc1/2) / 29.1;
-  
-  // HC2 HC-SCR04 pins
-  unsigned long millisNowHc2 = millis();
-  long durationHc2;
-  int distanceHc2;
-  digitalWrite(trigHc2Pin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigHc2Pin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigHc2Pin, LOW);
-  //Measures the distanceHc1
-  durationHc2 = pulseIn(echoHc2Pin, HIGH);
-  distanceHc2 = (durationHc2/2) / 29.1;
+	// HC1 HC-SCR04 pins
+	unsigned long millisNowHc1 = millis();
+	long durationHc1;
+	int distanceHc1;
+	digitalWrite(trigHc1Pin, LOW);
+	delayMicroseconds(2);
+	digitalWrite(trigHc1Pin, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(trigHc1Pin, LOW);
+	//Measures the distanceHc1
+	durationHc1 = pulseIn(echoHc1Pin, HIGH);
+	distanceHc1 = (durationHc1/2) / 29.1;
+	
+	// HC2 HC-SCR04 pins
+	unsigned long millisNowHc2 = millis();
+	long durationHc2;
+	int distanceHc2;
+	digitalWrite(trigHc2Pin, LOW);
+	delayMicroseconds(2);
+	digitalWrite(trigHc2Pin, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(trigHc2Pin, LOW);
+	//Measures the distanceHc1
+	durationHc2 = pulseIn(echoHc2Pin, HIGH);
+	distanceHc2 = (durationHc2/2) / 29.1;
   	
-	if(metricBtn == HIGH) {
+	if(isOnBtnMetric) {
 		metric = 3;
 		distanceHc1 /=  2.54;
 		distanceHc2 /= 2.54;
@@ -225,9 +203,9 @@ void loop(){
 			levelDistance[l] = levelInchDistance[l];
 		}
 	}
-  
+	
+	//DistanceHc1 value.
 	if (distanceHc1 >= maxDistance || distanceHc1 <= minDistance){
-	  //Evaluate the distanceHc1 value.
 		isOut = 1;
 		lcd.setCursor(8, 0);
 		lcd.print(" OUT  OF");
@@ -239,11 +217,10 @@ void loop(){
 		lcd.print(distanceHc1);
 		lcd.print(ch[metric]);
     
-		//Distance animation
 		lcdCol = 8;
 		p = 1;
     
-		//Distance animation
+		//Distance animation - right
 		if(distanceHc1 <= levelDistance[1]) {
 			lcd.setCursor(lcdCol, 0);
 			lcd.write(ch[p]);
@@ -327,9 +304,8 @@ void loop(){
 		}    
 	}
 
-
+	//DistanceHc2 value.
 	if (distanceHc2 >= maxDistance || distanceHc2 <= minDistance){
-	  //Evaluate the distanceHc2 value.
 		isOut = 1;
 		lcd.setCursor(0, 0);
 		lcd.print(" OUT  OF");
@@ -343,7 +319,7 @@ void loop(){
 		lcdCol = 0;
 		p = 0;
     
-		//Distance animation
+		//Distance animation - left
 		if(distanceHc2 <= levelDistance[1]) {
 			lcd.setCursor(lcdCol, 0);
 			lcd.write(" ");
@@ -434,7 +410,18 @@ void loop(){
 	}
 }
 
-//This plays the "beep"
+//Tone Function - Plays the tone
+int playSong(int track, float durConst){
+    for (int thisNote = 0; thisNote < sizes[track]; thisNote++) {
+    int noteDuration = 1000 / noteDurations[track][thisNote];
+    tone(buzPin, music[track][thisNote],noteDuration);
+    int pauseBetweenNotes = noteDuration * durConst;
+    delay(pauseBetweenNotes);
+    noTone(buzPin);
+  }
+}
+
+//Distance Function - this plays the "beep"
 void songLevel(int distance){
 	if(distance <= levelDistance[1]){
 		playSong(1,1.30);
@@ -455,9 +442,10 @@ void songLevel(int distance){
 	}
 }
 
-void temperatureSensor(int metricButton){
+//Temperature Function - temperature sensor
+void temperatureSensor(bool isOnButtonMetric){
 	// Get a reading from the temperature sensor:
-	int readingTemp = analogRead(sensorTempPin);
+	int readingTemp = analogRead(sensorTemperaturePin);
 	// Converting that reading to voltage, for 3.3v arduino use 3.3
 	float voltageTemp = (readingTemp * 5.0) / 1024.0;
 	// Convert the voltage into the temperature in degree Celsius:
@@ -470,14 +458,14 @@ void temperatureSensor(int metricButton){
 	Serial.print("Temp = ");
 	// Print the temperature in the Serial Monitor:
 	Serial.print(temperatureC);
-	Serial.print(" \xC2\xB0"); // shows degree symbol
+	Serial.print(" \xB0"); // shows degree symbol
 	Serial.println("C");
     */
       
     lcd.setCursor(0, 0);
 	lcd.print("  Temperature:  ");
 	
-	if(metricButton == LOW){
+	if(isOnButtonMetric){
 		lcd.setCursor(0, 1);
 		lcd.print("    ");
 		lcd.print(temperatureF);
