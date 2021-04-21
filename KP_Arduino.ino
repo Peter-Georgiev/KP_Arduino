@@ -312,9 +312,14 @@ void loop(){
 		lcd.setCursor(0, 1);
 		lcd.print(" RANGE  ");
 	} else {		
-		lcd.setCursor(0, 1);		
+		lcd.setCursor(0, 1);
 		lcd.print(distanceHc2);
 		lcd.print(ch[metric]);
+		if(distanceHc2 >= 0 || distanceHc2 <= 9){
+			lcd.print("  ");
+		} else if (distanceHc2 >= 10 || distanceHc2 <= 99){
+			lcd.print(" ");
+		}
 		
 		lcdCol = 0;
 		p = 0;
