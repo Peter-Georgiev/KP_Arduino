@@ -1,4 +1,4 @@
-/* Created by Peter Georgiev ~ 20.05.2021
+/* Created by Peter Georgiev ~ 21.04.2021
 #########Breadboard circuit mounting:########
  * LCD VSS pin to ground
  * LCD VDD pin to +5V
