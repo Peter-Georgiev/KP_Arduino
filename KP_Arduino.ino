@@ -1,4 +1,4 @@
-/* Created by Peter Georgiev ~ 21.04.2021
+/* Created by Peter Georgiev ~ 20.04.2021
 #########Breadboard circuit mounting:########
  * LCD VSS pin to ground
  * LCD VDD pin to +5V
@@ -22,7 +22,7 @@
  * A button for a temperature sensor analog pin A0
 ##############################################
 */
-//Including the LCD and sound library:
+//Including the LCD library:
 #include <LiquidCrystal.h>
 
 // Define to which pin of the Arduino the output of the LM35 is connected:
@@ -155,13 +155,11 @@ void loop(){
         return; 
 	}
   
-	int lcdCol = 0;
 	int p = 0;
-	int isOut = 0;
+	int lcdCol = 0;
 	int metric = 2;
 	
-  	maxDistance = levelCmDistance[8];
-	for(int l = 0; l < 8; l++){
+  	for(int l = 0; l < 8; l++){
 		levelDistance[l] = levelCmDistance[l];      	
 	}
   
@@ -179,7 +177,7 @@ void loop(){
 	digitalWrite(trigHc1Pin, LOW);
 	//Measures the distanceHc1
 	durationHc1 = pulseIn(echoHc1Pin, HIGH);
-	distanceHc1 = (durationHc1/2) / 29.1;
+	distanceHc1 = (durationHc1 / 29.1) / 2;
 	
 	// HC2 HC-SCR04 pins
 	unsigned long millisNowHc2 = millis();
@@ -192,12 +190,13 @@ void loop(){
 	digitalWrite(trigHc2Pin, LOW);
 	//Measures the distanceHc1
 	durationHc2 = pulseIn(echoHc2Pin, HIGH);
-	distanceHc2 = (durationHc2/2) / 29.1;
+	distanceHc2 = (durationHc2 / 29.1) / 2;
   	
+  	maxDistance = levelCmDistance[8];
 	if(isOnBtnMetric) {
 		metric = 3;
-		distanceHc1 /=  2.54;
-		distanceHc2 /= 2.54;
+		distanceHc1 = (durationHc1 / 74) / 2;
+		distanceHc2 = (durationHc2 / 74) / 2;
       	maxDistance = levelInchDistance[8];
 		for(int l = 0; l < 8; l++){          	
 			levelDistance[l] = levelInchDistance[l];
@@ -206,7 +205,6 @@ void loop(){
 	
 	//DistanceHc1 value.
 	if (distanceHc1 >= maxDistance || distanceHc1 <= minDistance){
-		isOut = 1;
 		lcd.setCursor(8, 0);
 		lcd.print(" OUT  OF");
 		lcd.setCursor(8, 1);
@@ -217,8 +215,8 @@ void loop(){
 		lcd.print(distanceHc1);
 		lcd.print(ch[metric]);
     
-		lcdCol = 8;
 		p = 1;
+		lcdCol = 8;
     
 		//Distance animation - right
 		if(distanceHc1 <= levelDistance[1]) {
@@ -306,7 +304,6 @@ void loop(){
 
 	//DistanceHc2 value.
 	if (distanceHc2 >= maxDistance || distanceHc2 <= minDistance){
-		isOut = 1;
 		lcd.setCursor(0, 0);
 		lcd.print("OUT  OF ");
 		lcd.setCursor(0, 1);
@@ -315,14 +312,15 @@ void loop(){
 		lcd.setCursor(0, 1);
 		lcd.print(distanceHc2);
 		lcd.print(ch[metric]);
-		if(distanceHc2 >= 0 || distanceHc2 <= 9){
+      
+		if(distanceHc2 > 0 && distanceHc2 <= 9){
 			lcd.print("  ");
-		} else if (distanceHc2 >= 10 || distanceHc2 <= 99){
+		} else if (distanceHc2 >= 10 && distanceHc2 <= 99){
 			lcd.print(" ");
 		}
 		
-		lcdCol = 0;
 		p = 0;
+		lcdCol = 0;
     
 		//Distance animation - left
 		if(distanceHc2 <= levelDistance[1]) {
@@ -408,9 +406,9 @@ void loop(){
 		}    
 	}
 	
-	if(distanceHc1 < distanceHc2 && isOut == 0) {
+	if(distanceHc1 < distanceHc2 && distanceHc1 > 0) {
 		songLevel(distanceHc1);		
-	} else if(isOut == 0) {
+	} else if(distanceHc2 < distanceHc1 && distanceHc2 > 0){
 		songLevel(distanceHc2);				
 	}
 }
