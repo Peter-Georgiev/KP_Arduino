@@ -2,7 +2,7 @@
 #########Breadboard circuit mounting:########
  * LCD VSS pin to ground
  * LCD VDD pin to +5V
- * 2KOhm resistor: ends to LCD VO pin and ground
+ * 2,2KOhm resistor: LCD LED pin to +5V
  * LCD RS pin to digital pin 2
  * LCD R/W pin to ground
  * LCD Enable pin to digital pin 3
@@ -13,10 +13,10 @@
  * LCD A pin to +5V
  * LCD K pin to ground
  * Buzzer + to 220Ohm
- * HC-SCR GND to ground
- * HC-SCR Echo to pin 11
- * HC-SCR Trig to pin 12
- * HC-SCR Vcc to +5V
+ * HC-SR04 GND to ground
+ * HC-SR04 Echo to pin 11
+ * HC-SR04 Trig to pin 12
+ * HC-SR04 Vcc to +5V
  * A button for a metric system pin 10
  * Temperature sensor analog pin A1
  * A button for a temperature sensor analog pin A0
@@ -25,7 +25,7 @@
 //Including the LCD library:
 #include <LiquidCrystal.h>
 
-// Define to which pin of the Arduino the output of the LM35 is connected:
+// Define to which pin of the Arduino the output of the TMP36 is connected:
 #define sensorTemperaturePin A1
 #define sensorBtnPin A0
 
